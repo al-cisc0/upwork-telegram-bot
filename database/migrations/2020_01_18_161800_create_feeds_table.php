@@ -15,7 +15,15 @@ class CreateFeedsTable extends Migration
     {
         Schema::create('feeds', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('chat_id');
+            $table->unsignedBigInteger('user_id');
+            $table->string('title')->nullable();
+            $table->text('link')->nullable();
+            $table->boolean('is_editing')->default(1);
+            $table->unsignedInteger('interval')->default(2);
             $table->timestamps();
+            $table->foreign('chat_id')->references('id')->on('chats')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -30,7 +30,17 @@ return [
         'unbanned' => 'Congratulations! You was unbanned.'
     ],
     'chat' => [
-        'added' => 'Chat :title was successfully added to your chats list'
+        'added' => 'Chat :title was successfully added to your chats list',
+        'listing' => "Choose one of your chats:\n"
+    ],
+    'rss' => [
+        'send_chat_id' => 'You are in RSS feed adding mode. Please choose one of your chats. All jobs from new RSS feed will be routed there. Send chat id or "cancel" to get back to regular mode.',
+        'send_title' => 'Send title of your new feed. It will be used to hashtag messages.',
+        'send_link' => 'Send RSS feed link copied from Upwork website.',
+        'feed_added' => 'New RSS feed successfully added. Default update interval is 2 minutes but you can change it with /set\\_period command.',
+        'country' => 'Country: :country',
+        'view_job' => 'View job',
+        'apply_job' => 'Appy job'
     ]
 
 ];

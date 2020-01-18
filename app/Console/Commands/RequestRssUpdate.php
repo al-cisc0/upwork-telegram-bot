@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Feed;
+use App\Notifications\JobNotification;
 use Illuminate\Console\Command;
 
 class RequestRssUpdate extends Command
@@ -11,7 +13,7 @@ class RequestRssUpdate extends Command
      *
      * @var string
      */
-    protected $signature = 'rss:update';
+    protected $signature = 'rss:update {--feed_id=}';
 
     /**
      * The console command description.
@@ -19,13 +21,6 @@ class RequestRssUpdate extends Command
      * @var string
      */
     protected $description = 'Request RSS update from Upwork';
-
-    /**
-     * Upwork RSS feed url
-     *
-     * @var string
-     */
-    protected $url = '';
 
     /**
      * Search results feed array
@@ -41,7 +36,6 @@ class RequestRssUpdate extends Command
      */
     public function __construct()
     {
-        $this->url = 'https://www.upwork.com/ab/feed/jobs/rss?budget=100-499%2C500-999%2C1000-4999%2C5000-&contractor_tier=2%2C3&verified_payment_only=1&proposals=0-4%2C5-9%2C10-14%2C15-19&q=laravel&sort=recency&paging=0%3B50&api_params=1&securityToken=45f8d8b652bb757ec5d3cb384f649a9592f42a54e127e28c323daa79b648b84499a03cfe7ab5c2c3e8265219f23e149e9eb51aaa0040b32d320c9274b7179326&userUid=736143449467912192&orgUid=736143481616330753';
         parent::__construct();
     }
 
@@ -52,18 +46,66 @@ class RequestRssUpdate extends Command
      */
     public function handle()
     {
+        if (!$feedId = $this->option('feed_id')) {
+            return;
+        }
+        if (!$feed = Feed::find($feedId)) {
+            return;
+        }
         $rss = new \DOMDocument();
-        $rss->load($this->url);
+        $rss->load($feed->link);
         foreach ($rss->getElementsByTagName('item') as $node) {
+            $hash = md5($node->getElementsByTagName('link')->item(0)->nodeValue);
+            if ($feed->jobs()->ofHash($hash)->exists()) {
+                continue;
+            }
             $description = $node->getElementsByTagName('description')->item(0)->nodeValue;
+            $country = $this->getCountry($description);
+            $applyLink = $this->getApplyLink($description);
+            $description = $this->sanitize($description);
+
             $this->feed[] = [
                 'title' => $node->getElementsByTagName('title')->item(0)->nodeValue,
                 'link' => $node->getElementsByTagName('link')->item(0)->nodeValue,
                 'pubDate' => $node->getElementsByTagName('pubDate')->item(0)->nodeValue,
                 'description' => $description,
-                'country' => $this->getCountry($description),
-                'apply_link' => $this->getApplyLink($description)
+                'country' => $country,
+                'apply_link' => $applyLink
             ];
+            $feed->jobs()->create(['hash' => $hash]);
+        }
+        $this->sendUpdates($feed);
+    }
+
+    /**
+     * Remove all telegram unsupported stuff
+     *
+     * @param string $text
+     * @return string
+     */
+    protected function sanitize(string $text)
+    {
+        $result = str_replace('_','\\_',$text);
+        $result = str_replace('*','\\*',$result);
+        $result = str_replace('<br />',"\n", $result);
+        $result = str_replace('<b>','*',$result);
+        $result = str_replace('</b>','*',$result);
+        $result = preg_replace('/<a .*>click to apply<\/a>/','',$result);
+        return $result;
+    }
+
+    /**
+     * Send new jobs to specified chat
+     *
+     * @param Feed $feed
+     */
+    protected function sendUpdates( Feed $feed )
+    {
+        $chat = $feed->chat;
+        $user = $feed->user;
+        $user->chat_id = $chat->chat_id;
+        foreach ($this->feed as $item) {
+            $user->notify(new JobNotification($feed->title, $item));
         }
     }
 
@@ -88,7 +130,14 @@ class RequestRssUpdate extends Command
      */
     protected function getApplyLink(string $description) : string
     {
+        $result  = "https://www.upwork.com/jobs";
         preg_match('/(<br \/><a href=")(.*)(">click to apply<\/a>)/',$description,$matches);
-        return count($matches) == 4 ? trim($matches[2]) : "https://www.upwork.com/jobs";
+        if (count($matches) == 4) {
+            preg_match('/(.*)(%.*)(\?source=rss)/',trim($matches[2]),$matches);
+        }
+        if (count($matches) == 4) {
+            $result = 'https://www.upwork.com/ab/proposals/job/'.$matches[2].'/apply/#/';
+        }
+        return $result;
     }
 }

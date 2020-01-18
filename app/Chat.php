@@ -7,4 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Chat extends Model
 {
     protected $fillable = ['user_id','chat_id','title'];
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function feeds()
+    {
+        return $this->hasMany(Feed::class);
+    }
 }

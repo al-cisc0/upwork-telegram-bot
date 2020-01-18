@@ -135,7 +135,7 @@ class WebhookController extends Controller
     {
         if (!$this->user->is_admin) {
             $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.admins_only')));
-            $admins = User::IsAdmin()->get();
+            $admins = User::isAdmin()->get();
             foreach ($admins as $admin) {
                 $admin->chat_id = $admin->telegram_id;
                 $admin->notify(new SimpleBotMessageNotification(trans('bot.admin_warning',[
@@ -173,6 +173,20 @@ class WebhookController extends Controller
     }
 
     /**
+     * Send message about given chat id is invalid
+     *
+     * @param string|null $commandMessage Additional message from command currently executing
+     */
+    protected function invalidChatIdResponse(?string $commandMessage = null)
+    {
+        $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.invalid_id')));
+        if ($commandMessage) {
+            $this->sendChatListing($commandMessage);
+        }
+
+    }
+
+    /**
      * Change given user access state
      *
      * @param string $column What column to change 'is_active' or 'is_banned'
@@ -205,6 +219,77 @@ class WebhookController extends Controller
                 $this->user->update(['mode' => null]);
             }
         }
+    }
+
+    /**
+     * Send chat listing with given header
+     *
+     * @param string $listingHeader Header of chats list
+     */
+    protected function sendChatListing(string $listingHeader)
+    {
+        $chats = $this->user->chats;
+        if (!count($chats)) {
+            $this->executeAddChatCommand();
+        }
+        $chatsListing = trans('bot.chat.listing');
+        foreach ($chats as $chat) {
+            $chatsListing .= $chat->id.' - '.$chat->title."\n";
+        }
+        $this->sendBotResponse(new SimpleBotMessageNotification($listingHeader."\n".$chatsListing));
+    }
+
+    /**
+     * Add new RSS feed
+     */
+    protected function addFeed()
+    {
+        $value = trim($this->message['text']);
+        $feed = $this->user->feeds()->isEditing()->first();
+        if (!$feed) {
+            $feed = $this->newFeed();
+            if (!$feed) {
+                return;
+            }
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.send_title')));
+        } else if (!$feed->title) {
+            $feed->update(['title' => substr($value,0,255)]);
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.send_link')));
+        } else if (!$feed->link) {
+            $feed->update([
+                'link' => $value,
+                'is_editing' => 0
+            ]);
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.feed_added')));
+            $this->user->update([
+                'mode' => null
+            ]);
+        }
+    }
+
+    /**
+     * New feed adding method
+     *
+     * @return |null
+     */
+    protected function newFeed()
+    {
+        $result = null;
+        $value = trim($this->message['text']);
+        if (!is_numeric($value)) {
+            $this->invalidChatIdResponse();
+        } else {
+            $chat = $this->user->chats()->find($value);
+            if (!$chat) {
+                $this->invalidChatIdResponse(trans('bot.rss.send_chat_id'));
+            } else {
+                $result = $chat->feeds()->create([
+                    'user_id' => $this->user->id,
+                    'is_editing' => 1
+                ]);
+            }
+        }
+        return $result;
     }
 
     // Bot Commands section
@@ -317,6 +402,9 @@ class WebhookController extends Controller
 
     }
 
+    /**
+     * Add current chat to user's chat list
+     */
     protected function executeAddChatCommand()
     {
         if (!$this->checkUser()) {
@@ -325,6 +413,22 @@ class WebhookController extends Controller
         $title = $this->message['chat']['title'] ?? 'private';
         $this->user->chats()->updateOrCreate(['chat_id' => $this->message['chat']['id']],['title' => $title]);
         $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.chat.added',['title' => $title])));
+    }
+
+    /**
+     * Start RSS feed adding dialogue
+     */
+    protected function executeAddFeedCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        if (!$this->mode) {
+            $this->user->update(['mode' => 'executeAddFeedCommand']);
+            $this->sendChatListing(trans('bot.rss.send_chat_id'));
+        } else {
+            $this->addFeed();
+        }
     }
 
 
