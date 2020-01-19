@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Traits\Silentable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,7 +12,7 @@ use NotificationChannels\Telegram\TelegramMessage;
 
 class HelpNotification extends Notification
 {
-    use Queueable;
+    use Queueable, Silentable;
 
     /**
      * Create a new notification instance.
@@ -40,9 +41,11 @@ class HelpNotification extends Notification
         if ($notifiable->is_admin) {
             $commands = trans('bot.help.admin_commands');
         }
-        return TelegramMessage::create()
+        $notification = TelegramMessage::create()
             ->to($notifiable->chat_id)
             ->content(trans('bot.help.description')."\n\n".$commands);
+        $notification = $this->silentize($notification,$notifiable);
+        return $notification;
     }
 
 }

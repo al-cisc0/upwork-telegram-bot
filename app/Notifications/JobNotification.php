@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Traits\Silentable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -10,7 +11,7 @@ use NotificationChannels\Telegram\TelegramMessage;
 
 class JobNotification extends Notification
 {
-    use Queueable;
+    use Queueable, Silentable;
 
     /**
      * Title of feed
@@ -51,7 +52,7 @@ class JobNotification extends Notification
 
     public function toTelegram($notifiable)
     {
-        return TelegramMessage::create()
+        $notification = TelegramMessage::create()
             ->to($notifiable->chat_id)
             ->content('<b>'.$this->item['title']."</b>\n\n".
                 $this->item['description']."\n\n".
@@ -60,5 +61,7 @@ class JobNotification extends Notification
             ->button(trans('bot.rss.view_job'), $this->item['link'])
             ->button(trans('bot.rss.apply_job'), $this->item['apply_link'])
             ->options(['parse_mode' => 'HTML']);
+        $notification = $this->silentize($notification,$notifiable);
+        return $notification;
     }
 }

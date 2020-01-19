@@ -445,7 +445,7 @@ class WebhookController extends Controller
             } else {
                 $this->user->filters()->updateOrCreate(['type' => 'Country'],['value' => $this->message['text']]);
             }
-            $this->mode = null;
+            $this->user->update(['mode' => null]);
             $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.filter.country_filter_set')));
         }
     }

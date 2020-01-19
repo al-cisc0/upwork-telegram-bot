@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Traits\Silentable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,7 +12,7 @@ use NotificationChannels\Telegram\TelegramMessage;
 
 class SimpleBotMessageNotification extends Notification
 {
-    use Queueable;
+    use Queueable, Silentable;
 
     /**
      * Message to send
@@ -43,9 +44,11 @@ class SimpleBotMessageNotification extends Notification
 
     public function toTelegram($notifiable)
     {
-        return TelegramMessage::create()
+        $notification = TelegramMessage::create()
             ->to($notifiable->chat_id)
             ->content($this->message);
+        $notification = $this->silentize($notification,$notifiable);
+        return $notification;
     }
 
 }
