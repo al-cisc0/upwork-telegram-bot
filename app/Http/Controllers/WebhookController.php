@@ -75,7 +75,7 @@ class WebhookController extends Controller
                 }
             }
         }
-        Log::info(print_r($request->all(),1));
+//        Log::info(print_r($request->all(),1));
         return response()->json([]);
     }
 
@@ -428,6 +428,25 @@ class WebhookController extends Controller
             $this->sendChatListing(trans('bot.rss.send_chat_id'));
         } else {
             $this->addFeed();
+        }
+    }
+
+    protected function executeFilterCountriesCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        if (!$this->mode) {
+            $this->user->update(['mode' => 'executeFilterCountriesCommand']);
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.filter.provide_countries')));
+        } else {
+            if ($this->message['text'] == 'clear') {
+                $this->user->filters()->where('type','=','Country')->delete();
+            } else {
+                $this->user->filters()->updateOrCreate(['type' => 'Country'],['value' => $this->message['text']]);
+            }
+            $this->mode = null;
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.filter.country_filter_set')));
         }
     }
 

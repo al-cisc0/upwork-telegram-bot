@@ -4,7 +4,13 @@ namespace App\Console\Commands;
 
 use App\Feed;
 use App\Notifications\JobNotification;
+use App\Notifications\SimpleBotMessageNotification;
+use App\Setting;
+use App\User;
+use App\UserFilter;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class RequestRssUpdate extends Command
 {
@@ -46,6 +52,7 @@ class RequestRssUpdate extends Command
      */
     public function handle()
     {
+        $this->feed = [];
         if (!$feedId = $this->option('feed_id')) {
             return;
         }
@@ -53,28 +60,36 @@ class RequestRssUpdate extends Command
             return;
         }
         $rss = new \DOMDocument();
-        $rss->load($feed->link);
-        foreach ($rss->getElementsByTagName('item') as $node) {
-            $hash = md5($node->getElementsByTagName('link')->item(0)->nodeValue);
-            if ($feed->jobs()->ofHash($hash)->exists()) {
-                continue;
-            }
-            $description = $node->getElementsByTagName('description')->item(0)->nodeValue;
-            $country = $this->getCountry($description);
-            $applyLink = $this->getApplyLink($description);
-            $description = $this->sanitize($description);
+        try {
+            $rss->load($feed->link);
+            foreach ($rss->getElementsByTagName('item') as $node) {
+                $hash = md5($node->getElementsByTagName('link')->item(0)->nodeValue);
+                if ($feed->jobs()->ofHash($hash)->exists()) {
+                    continue;
+                }
+                $description = $node->getElementsByTagName('description')->item(0)->nodeValue;
+                $country = $this->getCountry($description);
+                $applyLink = $this->getApplyLink($description);
+                $description = $this->sanitize($description);
 
-            $this->feed[] = [
-                'title' => $node->getElementsByTagName('title')->item(0)->nodeValue,
-                'link' => $node->getElementsByTagName('link')->item(0)->nodeValue,
-                'pubDate' => $node->getElementsByTagName('pubDate')->item(0)->nodeValue,
-                'description' => $description,
-                'country' => $country,
-                'apply_link' => $applyLink
-            ];
-            $feed->jobs()->create(['hash' => $hash]);
+                $this->feed[] = [
+                    'title' => str_replace(' - Upwork',
+                        '',
+                        $this->sanitize($node->getElementsByTagName('title')->item(0)->nodeValue)),
+                    'link' => $node->getElementsByTagName('link')->item(0)->nodeValue,
+                    'pubDate' => $node->getElementsByTagName('pubDate')->item(0)->nodeValue,
+                    'description' => $description,
+                    'country' => $country,
+                    'apply_link' => $applyLink
+                ];
+                $feed->jobs()->create(['hash' => $hash]);
+            }
+            $this->sendUpdates($feed);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->notifyAdmins();
         }
-        $this->sendUpdates($feed);
+
     }
 
     /**
@@ -85,11 +100,10 @@ class RequestRssUpdate extends Command
      */
     protected function sanitize(string $text)
     {
-        $result = str_replace('_','\\_',$text);
-        $result = str_replace('*','\\*',$result);
-        $result = str_replace('<br />',"\n", $result);
-        $result = str_replace('<b>','*',$result);
-        $result = str_replace('</b>','*',$result);
+        $result = str_replace('<br />',"\n", $text);
+        $result = str_replace('&nbsp;'," ", $result);
+        $result = str_replace('&amp;',"&", $result);
+        $result = str_replace('&rsquo;',"'", $result);
         $result = preg_replace('/<a .*>click to apply<\/a>/','',$result);
         return $result;
     }
@@ -104,8 +118,64 @@ class RequestRssUpdate extends Command
         $chat = $feed->chat;
         $user = $feed->user;
         $user->chat_id = $chat->chat_id;
+        $userFilters = $user->filters;
+        if ($userFilters) {
+            $this->applyUserFilters($userFilters);
+        }
         foreach ($this->feed as $item) {
-            $user->notify(new JobNotification($feed->title, $item));
+            try {
+                $user->notify(new JobNotification($feed->title, $item));
+            } catch (\Exception $e) {
+                Log::error('TLG_ERROR: '.$e->getMessage());
+                Log::error('TLG_MESSAGE: '.$item['title'].' TTT '.$item['description']);
+                $this->notifyAdmins();
+            }
+        }
+        $feed->update(['dispatched_at' => Carbon::now()]);
+    }
+
+    /**
+     * Apply user filters of all types
+     *
+     * @param $userFilters Collection of UserFilters
+     */
+    protected function applyUserFilters($userFilters)
+    {
+        foreach ($userFilters as $userFilter) {
+            $methodName = 'apply'.$userFilter->type.'Filter';
+            if (method_exists($this,$methodName)) {
+                $this->$methodName($userFilter->value);
+            }
+        }
+    }
+
+    /**
+     * Exclude jobs from selected countries
+     *
+     * @param string $value
+     */
+    protected function applyCountryFilter(string $value)
+    {
+        $countries = array_map('trim',explode(',',$value));
+        foreach ($this->feed as $key=>$item) {
+            if (in_array($item['country'],$countries)) {
+                unset($this->feed[$key]);
+            }
+        }
+    }
+
+    /**
+     * Notify admins via telegram if something gone wrong
+     *
+     */
+    protected function notifyAdmins()
+    {
+        if (Setting::getSetting('debug') == 1) {
+            $admins = User::isAdmin()->get();
+            foreach ($admins as $admin) {
+                $admin->chat_id = $admin->telegram_id;
+                $admin->notify(new SimpleBotMessageNotification(trans('bot.debug_message')));
+            }
         }
     }
 

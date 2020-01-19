@@ -65,4 +65,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Feed::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function filters()
+    {
+        return $this->hasMany(UserFilter::class);
+    }
 }

@@ -53,9 +53,12 @@ class JobNotification extends Notification
     {
         return TelegramMessage::create()
             ->to($notifiable->chat_id)
-            ->content('*'.$this->item['title']."*\n\n".
-                $this->item['description'])
+            ->content('<b>'.$this->item['title']."</b>\n\n".
+                $this->item['description']."\n\n".
+                '#'.str_replace(' ','-',$this->title)
+            )
             ->button(trans('bot.rss.view_job'), $this->item['link'])
-            ->button(trans('bot.rss.apply_job'), $this->item['apply_link']);
+            ->button(trans('bot.rss.apply_job'), $this->item['apply_link'])
+            ->options(['parse_mode' => 'HTML']);
     }
 }

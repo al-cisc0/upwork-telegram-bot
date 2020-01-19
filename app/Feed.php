@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Feed extends Model
 {
-    protected $fillable = ['chat_id','title','link','is_editing', 'interval', 'user_id'];
+    protected $fillable = ['chat_id','title','link','is_editing', 'interval', 'user_id', 'dispatched_at'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

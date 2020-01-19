@@ -5,6 +5,7 @@ return [
     'canceled' => 'Command is canceled.',
     'admins_only' => 'This command is only for admins. And they will be notified about your activity.',
     'admin_warning' => 'Warning! User :name id: :id telegram id: :telegram_id tries to execute admin command!',
+    'debug_message' => 'There is something wrong with new jobs delivery. Please check the logs.',
     'you_are_banned' => 'Sorry, but you are permanently banned by bot owner. Nothing of your messages or commands will be delivered anywhere.',
     'help' => [
         'description' => 'Hello! This bot will notify you with new jobs posted on Upwork. You can make some groups with it for sorting from different RSS or have everything in private chat with bot. Also you can filter jobs by country and keywords. Have fun and good luck!',
@@ -41,6 +42,10 @@ return [
         'country' => 'Country: :country',
         'view_job' => 'View job',
         'apply_job' => 'Appy job'
+    ],
+    'filter' => [
+        'provide_countries' => "You are in countri filter setup mode. Send country names which you want to exclude comma separated (case sensitive). E.g. India,Pakistan. Or \"clear\" to delete existing filter. Or \"cancel\" to get back to regular mode.",
+        'country_filter_set' => 'Filtering by country was changed. If you will want to change it, just execute this command again.'
     ]
 
 ];
