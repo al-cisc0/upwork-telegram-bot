@@ -292,6 +292,33 @@ class WebhookController extends Controller
         return $result;
     }
 
+    /**
+     * Save to DB filters user set
+     *
+     * @param string $mode Mode string. Name of currently executing method.
+     * @param string $type Type of filter. E.g. "Country"
+     * @param string $message Message asking user to provide details
+     * @param string $resultMessage Success message
+     */
+    protected function setFilters(string $mode, string $type, string $message, string $resultMessage)
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        if (!$this->mode) {
+            $this->user->update(['mode' => $mode]);
+            $this->sendBotResponse(new SimpleBotMessageNotification($message));
+        } else {
+            if ($this->message['text'] == 'clear') {
+                $this->user->filters()->where('type','=',$type)->delete();
+            } else {
+                $this->user->filters()->updateOrCreate(['type' => $type],['value' => $this->message['text']]);
+            }
+            $this->user->update(['mode' => null]);
+            $this->sendBotResponse(new SimpleBotMessageNotification($resultMessage));
+        }
+    }
+
     // Bot Commands section
 
     /**
@@ -299,6 +326,14 @@ class WebhookController extends Controller
      *
      */
     protected function executeHelpCommand()
+    {
+        $this->sendBotResponse(new HelpNotification());
+    }
+
+    /**
+     * Send greetings message
+     */
+    protected function executeStartCommand()
     {
         $this->sendBotResponse(new HelpNotification());
     }
@@ -431,26 +466,75 @@ class WebhookController extends Controller
         }
     }
 
+    /**
+     * Set countries list to exclude jobs from there
+     */
     protected function executeFilterCountriesCommand()
+    {
+        $this->setFilters(
+            'executeFilterCountriesCommand',
+            'Country',
+            trans('bot.filter.provide_countries'),
+            trans('bot.filter.country_filter_set'));
+    }
+
+    /**
+     * Set schedule when all notifications will be sent with no sound
+     */
+    protected function executeSilenceScheduleCommand()
     {
         if (!$this->checkUser()) {
             return;
         }
         if (!$this->mode) {
-            $this->user->update(['mode' => 'executeFilterCountriesCommand']);
-            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.filter.provide_countries')));
+            $this->user->update(['mode' => 'executeSilenceScheduleCommand']);
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.sleep_mode.desc')));
         } else {
-            if ($this->message['text'] == 'clear') {
-                $this->user->filters()->where('type','=','Country')->delete();
+            if ($this->message['text'] == 'toggle') {
+                $this->user->update(['enable_sleep' => !$this->user->enable_sleep,'mode' => null]);
+                $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.sleep_mode.toggle',['state' => (int) $this->user->enable_sleep])));
             } else {
-                $this->user->filters()->updateOrCreate(['type' => 'Country'],['value' => $this->message['text']]);
+                $val = $this->message['text'];
+                if (!preg_match('/^\d\d:\d\d-\d\d:\d\d$/',$val)) {
+                    $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.sleep_mode.wrong_format')));
+                    $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.sleep_mode.desc')));
+                } else {
+                    $arr = explode('-',$val);
+                    $this->user->update([
+                        'mode' => null,
+                        'enable_sleep' => 1,
+                        'sleep_from' => $arr[0],
+                        'sleep_to' => $arr[1],
+                        ]);
+                    $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.sleep_mode.set')));
+                }
             }
-            $this->user->update(['mode' => null]);
-            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.filter.country_filter_set')));
         }
     }
 
+    /**
+     * Set job title filter
+     */
+    protected function executeFilterTitleCommand()
+    {
+        $this->setFilters(
+            'executeFilterTitleCommand',
+            'Title',
+            trans('bot.filter.provide_title_keywords'),
+            trans('bot.filter.title_keywords_set'));
+    }
 
+    /**
+     * Set job title filter
+     */
+    protected function executeFilterDescriptionCommand()
+    {
+        $this->setFilters(
+            'executeFilterDescriptionCommand',
+            'Description',
+            trans('bot.filter.provide_description_keywords'),
+            trans('bot.filter.description_keywords_set'));
+    }
     // End of bot commands section
 
 }

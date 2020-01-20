@@ -104,6 +104,8 @@ class RequestRssUpdate extends Command
         $result = str_replace('&nbsp;'," ", $result);
         $result = str_replace('&amp;',"&", $result);
         $result = str_replace('&rsquo;',"'", $result);
+        $result = str_replace('&ldquo;','"', $result);
+        $result = str_replace('&rdquo;','"', $result);
         $result = preg_replace('/<a .*>click to apply<\/a>/','',$result);
         return $result;
     }
