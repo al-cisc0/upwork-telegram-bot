@@ -49,7 +49,7 @@ class DispatchRssJobs extends Command
         $feeds = Feed::whereHas('user',function($query) {
             $query->where('is_active','=',1)
                 ->where('is_banned','=',0);
-        })->get();
+        })->isActive()->get();
         $activeUpdates = Job::ofQueue('feedUpdate')->count();
         $updateDelay = $delay*$activeUpdates;
         foreach ($feeds as $feed) {

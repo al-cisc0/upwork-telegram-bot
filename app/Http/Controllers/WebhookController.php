@@ -535,6 +535,24 @@ class WebhookController extends Controller
             trans('bot.filter.provide_description_keywords'),
             trans('bot.filter.description_keywords_set'));
     }
+
+    /**
+     * Disable all feeds
+     */
+    protected function executeDisableAllCommand()
+    {
+        $this->user->feeds()->update(['is_active' => 0]);
+        $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.disable.all_disabled')));
+    }
+
+    /**
+     * Enable all feeds
+     */
+    protected function executeEnableAllCommand()
+    {
+        $this->user->feeds()->update(['is_active' => 1]);
+        $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.disable.all_enabled')));
+    }
     // End of bot commands section
 
 }

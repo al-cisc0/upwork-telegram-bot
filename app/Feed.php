@@ -28,6 +28,17 @@ class Feed extends Model
     }
 
     /**
+     * Filter only active feeds
+     *
+     * @param $query
+     * @return mixed
+     */
+    public function scopeIsActive($query)
+    {
+        return $query->where('is_active','=',1);
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function jobs()
