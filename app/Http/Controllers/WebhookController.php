@@ -252,9 +252,9 @@ class WebhookController extends Controller
             $this->user->update(['mode' => null]);
             return;
         }
-        $feedListing = trans('bot.rss.listing');
+        $feedListing = $listingHeader ? trans('bot.rss.listing') : '';
         foreach ($feeds as $feed) {
-            $feedListing .= $feed->id.' - '.$feed->title."\n".'<'.$feed->link.">\n";
+            $feedListing .= $feed->id.' - '.$feed->title."\n\n".$feed->link."\n\n";
         }
         $this->sendBotResponse(new SimpleBotMessageNotification($listingHeader."\n".$feedListing));
     }
