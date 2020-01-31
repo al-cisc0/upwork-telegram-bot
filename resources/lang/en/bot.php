@@ -34,10 +34,12 @@ return [
     'chat' => [
         'added' => 'Chat :title was successfully added to your chats list',
         'listing' => "Choose one of your chats:\n",
-        'not_in_your_list' => "This chat is not in your list. Please add it first."
+        'not_in_your_list' => "This chat is not in your list. Please add it first.",
+        'deleted' =>  "Current chat deleted from your list with all connected feeds"
     ],
     'rss' => [
         'send_chat_id' => 'You are in RSS feed adding mode. Please choose one of your chats. All jobs from new RSS feed will be routed there. Send chat id or "cancel" to get back to regular mode.',
+        'send_feed_id' => 'You are in RSS feed deleting mode. Please choose one of your feeds. Send feed id or "cancel" to get back to regular mode.',
         'send_title' => 'Send title of your new feed. It will be used to hashtag messages.',
         'send_link' => 'Send RSS feed link copied from Upwork website.',
         'feed_added' => 'New RSS feed successfully added. Default update interval is 2 minutes but you can change it with /set\\_period command.',
@@ -46,6 +48,12 @@ return [
         'apply_job' => 'Appy job',
         'chat_feeds_disabled' => 'All feeds connected to this chat are disabled.',
         'chat_feeds_enabled' => 'All feeds connected to this chat are enabled.',
+        'listing' => "Choose one of your feeds:\n",
+        'invalid_feed_id' => 'Chosen feed id is invalid. Please send another one.',
+        'feed_deleted' => 'Chosen feed deleted.',
+        'send_period' => 'You are in feeds update interval editing mode mode. Send interval in minutes (min 2) or "cancel" to get back to regular mode.',
+        'invalid_period' => 'This interval value is invalid.',
+        'period_set' => 'New feeds update interval :interval minutes was set.'
     ],
     'filter' => [
         'provide_countries' => "You are in country filter setup mode. Send country names which you want to exclude comma separated (case sensitive). E.g. India,Pakistan. Or \"clear\" to delete existing filter. Or \"cancel\" to get back to regular mode.",

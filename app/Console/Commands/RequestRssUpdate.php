@@ -167,6 +167,44 @@ class RequestRssUpdate extends Command
     }
 
     /**
+     * Exclude jobs with given keywords in title
+     *
+     * @param string $value
+     */
+    protected function applyTitleFilter(string $value)
+    {
+        $this->excludeKeyWords('title',$value);
+    }
+
+    /**
+     * Exclude jobs with given keywords in description
+     *
+     * @param string $value
+     */
+    protected function applyDescriptionFilter(string $value)
+    {
+        $this->excludeKeyWords('description',$value);
+    }
+
+    /**
+     * Exclude jobs by searching keywords in given fields
+     *
+     * @param string $searchField Item field to search keywords in
+     * @param string $value Keywords string
+     */
+    protected function excludeKeyWords(string $searchField, string $value)
+    {
+        $keyWords = array_map('trim',explode(',',$value));
+        foreach ($this->feed as $key=>$item) {
+            foreach ($keyWords as $keyWord) {
+                if (strpos($item[$searchField],$keyWord) === false) {
+                    unset($this->feed[$key]);
+                }
+            }
+        }
+    }
+
+    /**
      * Notify admins via telegram if something gone wrong
      *
      */

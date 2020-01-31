@@ -240,6 +240,43 @@ class WebhookController extends Controller
     }
 
     /**
+     * Send feed listing with given header
+     *
+     * @param string $listingHeader Header of chats list
+     */
+    protected function sendFeedListing(string $listingHeader)
+    {
+        $feeds = $this->user->feeds;
+        if (!count($feeds)) {
+            $this->sendBotResponse(new SimpleBotMessageNotification('bot.rss.you_have_no_feeds'));
+            $this->user->update(['mode' => null]);
+            return;
+        }
+        $feedListing = trans('bot.rss.listing');
+        foreach ($feeds as $feed) {
+            $feedListing .= $feed->id.' - '.$feed->title."\n".$feed->link;
+        }
+        $this->sendBotResponse(new SimpleBotMessageNotification($listingHeader."\n".$feedListing));
+    }
+
+    /**
+     * Delete selected feed
+     */
+    protected function deleteFeed()
+    {
+        $value = trim($this->message['text']);
+        $feed = $this->user->feeds()->where('id','=',$value)->first();
+        if (!$feed) {
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.invalid_feed_id')));
+            $this->sendFeedListing('');
+        } else {
+            $feed->delete();
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.feed_deleted')));
+            $this->user->update(['mode' => null]);
+        }
+    }
+
+    /**
      * Add new RSS feed
      */
     protected function addFeed()
@@ -471,6 +508,18 @@ class WebhookController extends Controller
     }
 
     /**
+     * Delete current chat from list
+     */
+    protected function executeDeleteChatCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        $this->user->chats()->where('chat_id', '=', $this->message['chat']['id'])->delete();
+        $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.chat.deleted')));
+    }
+
+    /**
      * Disable all feeds connected to current chat
      */
     protected function executeDisableChatCommand()
@@ -505,6 +554,56 @@ class WebhookController extends Controller
             $this->sendChatListing(trans('bot.rss.send_chat_id'));
         } else {
             $this->addFeed();
+        }
+    }
+
+    /**
+     * Start RSS feed deleting dialogue
+     */
+    protected function executeDeleteFeedCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        if (!$this->mode) {
+            $this->user->update(['mode' => 'executeDeleteFeedCommand']);
+            $this->sendFeedListing(trans('bot.rss.send_feed_id'));
+        } else {
+            $this->deleteFeed();
+        }
+    }
+
+    /**
+     * List all user's feeds
+     */
+    protected function executeListFeedsCommand()
+    {
+        $this->sendFeedListing('');
+    }
+
+    /**
+     * Set feeds update period
+     */
+    protected function executeSetPeriodCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        if (!$this->mode) {
+            $this->user->update(['mode' => 'executeSetPeriodCommand']);
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.send_period')));
+        } else {
+            $value = trim($this->message['text']);
+            if (!is_numeric($value) || $value < 2) {
+                $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.invalid_period')));
+                $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.send_period')));
+            } else {
+                $this->user->feeds()->update([
+                    'interval' => $value
+                ]);
+                $this->user->update(['mode' => null]);
+                $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.period_set',['interval' => $value])));
+            }
         }
     }
 
