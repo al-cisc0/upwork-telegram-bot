@@ -319,6 +319,26 @@ class WebhookController extends Controller
         }
     }
 
+    /**
+     * Toggle is_active state of all feeds connected to current chat
+     * @param bool $state
+     */
+    protected function toggleConnectedFeeds(bool $state)
+    {
+        $chat = $this->user->chats()->where('chat_id', '=', $this->message['chat']['id'])->first();
+        if (!$chat) {
+            $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.chat.not_in_your_list')));
+        } else {
+            if ($state) {
+                $chat->feeds()->update(['is_active' => 1]);
+                $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.chat_feeds_enabled')));
+            } elseif (!$state) {
+                $chat->feeds()->update(['is_active' => 0]);
+                $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.rss.chat_feeds_disabled')));
+            }
+
+        }
+    }
     // Bot Commands section
 
     /**
@@ -448,6 +468,28 @@ class WebhookController extends Controller
         $title = $this->message['chat']['title'] ?? 'private';
         $this->user->chats()->updateOrCreate(['chat_id' => $this->message['chat']['id']],['title' => $title]);
         $this->sendBotResponse(new SimpleBotMessageNotification(trans('bot.chat.added',['title' => $title])));
+    }
+
+    /**
+     * Disable all feeds connected to current chat
+     */
+    protected function executeDisableChatCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        $this->toggleConnectedFeeds(0);
+    }
+
+    /**
+     * Disable all feeds connected to current chat
+     */
+    protected function executeEnableChatCommand()
+    {
+        if (!$this->checkUser()) {
+            return;
+        }
+        $this->toggleConnectedFeeds(1);
     }
 
     /**

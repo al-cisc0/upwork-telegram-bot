@@ -10,8 +10,8 @@ return [
     'you_are_banned' => 'Sorry, but you are permanently banned by bot owner. Nothing of your messages or commands will be delivered anywhere.',
     'help' => [
         'description' => 'Hello! This bot will notify you with new jobs posted on Upwork. You can make some groups with it for sorting from different RSS or have everything in private chat with bot. Also you can filter jobs by country and keywords. Have fun and good luck!',
-        'commands' => "/help - View commands list and service description\n/add\\_chat - Execute this command in chat for adding to your chat list\n/delete\\_chat - Delete chat from your chat list. All RSS feeds attached to deleted chat also will be deleted.\n/add\\_feed - Attach RSS feed search link\n/delete\\_feed - Delete RSS feed search link\n/list\\_feeds - List RSS feeds attached to current chat\n/set\\_period - Set update period for current chat\n/filter\\_countries - Exclude jobs from country list (comma separated)\n/filter\\_description - Exclude jobs contains selected keywords (comma separated)\n/filter\\_title - Exclude jobs contains selected keywords (comma separated)\n/silence\\_schedule - Set time period with silent notifications\n/disable\\_all - Disable all your feeds\n/enable\\_all - Enable all your feeds",
-        'admin_commands' => "/help - View commands list and service description\n/add\\_chat - Execute this command in chat for adding to your chat list\n/delete\\_chat - Delete chat from your chat list. All RSS feeds attached to deleted chat also will be deleted.\n/add\\_feed - Attach RSS feed search link\n/delete\\_feed - Delete RSS feed search link\n/list\\_feeds - List RSS feeds attached to current chat\n/set\\_period - Set update period for current chat\n/filter\\_countries - Exclude jobs from country list (comma separated)\n/filter\\_description - Exclude jobs contains selected keywords (comma separated)\n/filter\\_title - Exclude jobs contains selected keywords (comma separated)\n/silence\\_schedule - Set time period with silent notifications\n/disable\\_all - Disable all your feeds\n/enable\\_all - Enable all your feeds/my\\_telegram\\_id - Get your telegram id\n/give\\_access - Give access to user (if bot usage is restricted)\n/deny\\_access - Deny access to user (if bot usage is restricted)\n/ban - Permanently ban user. Any messages will be ignored.\n/unban - Unban user",
+        'commands' => "/help - View commands list and service description\n/add\\_chat - Execute this command in chat for adding to your chat list\n/delete\\_chat - Delete chat from your chat list. All RSS feeds attached to deleted chat also will be deleted.\n/add\\_feed - Attach RSS feed search link\n/delete\\_feed - Delete RSS feed search link\n/list\\_feeds - List RSS feeds attached to current chat\n/set\\_period - Set update period for current chat\n/filter\\_countries - Exclude jobs from country list (comma separated)\n/filter\\_description - Exclude jobs contains selected keywords (comma separated)\n/filter\\_title - Exclude jobs contains selected keywords (comma separated)\n/silence\\_schedule - Set time period with silent notifications\n/disable\\_all - Disable all your feeds\n/enable\\_all - Enable all your feeds\n/enable\\_chat - Enable all your feeds connected to current chat\n/disable\\_chat - Disable all your feeds connected to current chat",
+        'admin_commands' => "/help - View commands list and service description\n/add\\_chat - Execute this command in chat for adding to your chat list\n/delete\\_chat - Delete chat from your chat list. All RSS feeds attached to deleted chat also will be deleted.\n/add\\_feed - Attach RSS feed search link\n/delete\\_feed - Delete RSS feed search link\n/list\\_feeds - List RSS feeds attached to current chat\n/set\\_period - Set update period for current chat\n/filter\\_countries - Exclude jobs from country list (comma separated)\n/filter\\_description - Exclude jobs contains selected keywords (comma separated)\n/filter\\_title - Exclude jobs contains selected keywords (comma separated)\n/silence\\_schedule - Set time period with silent notifications\n/disable\\_all - Disable all your feeds\n/enable\\_all - Enable all your feeds\n/enable\\_chat - Enable all your feeds connected to current chat\n/disable\\_chat - Disable all your feeds connected to current chat\n/my\\_telegram\\_id - Get your telegram id\n/give\\_access - Give access to user (if bot usage is restricted)\n/deny\\_access - Deny access to user (if bot usage is restricted)\n/ban - Permanently ban user. Any messages will be ignored.\n/unban - Unban user",
     ],
     'my_id' => [
         'response' => 'Your telegram id is :id'
@@ -33,7 +33,8 @@ return [
     ],
     'chat' => [
         'added' => 'Chat :title was successfully added to your chats list',
-        'listing' => "Choose one of your chats:\n"
+        'listing' => "Choose one of your chats:\n",
+        'not_in_your_list' => "This chat is not in your list. Please add it first."
     ],
     'rss' => [
         'send_chat_id' => 'You are in RSS feed adding mode. Please choose one of your chats. All jobs from new RSS feed will be routed there. Send chat id or "cancel" to get back to regular mode.',
@@ -42,7 +43,9 @@ return [
         'feed_added' => 'New RSS feed successfully added. Default update interval is 2 minutes but you can change it with /set\\_period command.',
         'country' => 'Country: :country',
         'view_job' => 'View job',
-        'apply_job' => 'Appy job'
+        'apply_job' => 'Appy job',
+        'chat_feeds_disabled' => 'All feeds connected to this chat are disabled.',
+        'chat_feeds_enabled' => 'All feeds connected to this chat are enabled.',
     ],
     'filter' => [
         'provide_countries' => "You are in country filter setup mode. Send country names which you want to exclude comma separated (case sensitive). E.g. India,Pakistan. Or \"clear\" to delete existing filter. Or \"cancel\" to get back to regular mode.",
