@@ -254,7 +254,7 @@ class WebhookController extends Controller
         }
         $feedListing = trans('bot.rss.listing');
         foreach ($feeds as $feed) {
-            $feedListing .= $feed->id.' - '.$feed->title."\n".$feed->link;
+            $feedListing .= $feed->id.' - '.$feed->title."\n".'<'.$feed->link.">\n";
         }
         $this->sendBotResponse(new SimpleBotMessageNotification($listingHeader."\n".$feedListing));
     }
