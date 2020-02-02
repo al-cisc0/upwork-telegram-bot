@@ -197,7 +197,7 @@ class RequestRssUpdate extends Command
         $keyWords = array_map('trim',explode(',',$value));
         foreach ($this->feed as $key=>$item) {
             foreach ($keyWords as $keyWord) {
-                if (strpos($item[$searchField],$keyWord) !== false) {
+                if (stripos($item[$searchField],$keyWord) !== false) {
                     unset($this->feed[$key]);
                 }
             }
