@@ -3,11 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Feed;
-use App\Notifications\JobNotification;
 use App\Notifications\SimpleBotMessageNotification;
 use App\Setting;
 use App\User;
-use App\UserFilter;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -124,9 +122,10 @@ class RequestRssUpdate extends Command
         if ($userFilters) {
             $this->applyUserFilters($userFilters);
         }
+        $notificationName = 'App\Notifications\JobNotification'.ucfirst($chat->platform);
         foreach ($this->feed as $item) {
             try {
-                $user->notify(new JobNotification($feed->title, $item));
+                $user->notify(new $notificationName($feed->title, $item));
             } catch (\Exception $e) {
                 Log::error('TLG_ERROR: '.$e->getMessage());
                 Log::error('TLG_MESSAGE: '.$item['title'].' TTT '.$item['description']);

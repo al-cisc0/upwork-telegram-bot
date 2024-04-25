@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\Telegram\TelegramChannel;
 use NotificationChannels\Telegram\TelegramMessage;
 
-class JobNotification extends Notification
+class JobNotificationTelegram extends Notification
 {
     use Queueable, Silentable;
 
